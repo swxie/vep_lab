@@ -1,7 +1,7 @@
 function [xcorr_after, xcorr_ori] = testInnerPatient(name, isPlot, arg)
 % name示例：'.\data\xsw_?.mat'
 % 会根据name读取满足条件的所有mat文件（通常是关于同一个受试者的全部mat文件）
-% 每个文件内包含了一个60s×4的四路fvep信号数据，采样率为1e5
+% 每个文件内包含了一个60s×4的四路fvep信号数据，采样率为1e2
 if nargin == 1
     isPlot = 1;
     arg = init_arg();
@@ -15,8 +15,6 @@ right_vep_after = [];
 for i = 1:file_num
     %读取文件
     load(strcat('./data/', filelist(i).name), 'data');
-    %去除可能的NaN
-    data = rmmissing(data);
     [left_vep_cur, right_vep_cur, ~ , left_vep_cur_b, right_vep_cur_b] = signal_enhance(data, arg);
     left_vep_before = [left_vep_before, mean(left_vep_cur_b, 2)];
     right_vep_before = [right_vep_before, mean(right_vep_cur_b, 2)];

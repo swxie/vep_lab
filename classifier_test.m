@@ -1,62 +1,130 @@
 %区分数据集和验证集
-train_set = ["liule", "stu5", "wyx","xsw", "ybf","zxy"];
-test_set = ["stu1", "stu2", "stu3", "stu4"];
+train_set = ["lle", "st5", "wyx","xsw", "ybf","zxy"];
+test_set = ["st1", "st2", "st3", "st4"];
 cur_set = train_set; %选择使用的集合
-%测试不同小波变换参数对结果的影响
-fprintf("无小波变换:\n");
-fprintf("序号\t平均准确率\t标准差\t熵\n");
+
+% %测试1 ： 对svm参数进行对数粗搜索,此时不使用小波变换
+% arg = init_arg();
+% arg.dwt_order = 0;
+% dataSet = make_dataSet(".\data\" + cur_set(k) + "*", arg);
+% nu = [];
+% sigma = [];
+% acc = [];
+% nu_exp_range = 0 : -0.5 : -3;%nu的指数范围
+% sigma_exp_range = -3 : 0.5 : 3;%sigma的指数范围
+% for i = nu_exp_range
+%     for j = sigma_exp_range
+%         nu = [nu; 10^i];
+%         sigma = [sigma; 10^j];
+%         acc_cur = [];
+%         for  k = 1 : length(cur_set)
+%             [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1, 10^i, 10^j);
+%             acc_cur = [acc_cur; mean_acc];
+%         end
+%         acc = [acc; mean(acc_cur)];
+%     end
+% end
+% nu = reshape(nu, length(sigma_exp_range), length(nu_exp_range))';
+% acc = reshape(acc, length(sigma_exp_range), length(nu_exp_range))';
+% sigma = reshape(sigma, length(sigma_exp_range), length(nu_exp_range))';
+% figure;
+% pcolor(nu, sigma, acc);
+% set(gca','yscale','log');
+% set(gca','xscale','log');
+% xlabel("nu");
+% ylabel("sigma");
+% shading interp;
+% colorbar;
+% %测试1结束
+
+
+% %测试2:详细搜索子区间
+% arg = init_arg();
+% arg.dwt_order = 0;
+% dataSet = make_dataSet(".\data\" + cur_set(k) + "*", arg);
+% nu = [];
+% sigma = [];
+% acc = [];
+% nu_range = 2e-1 : 2e-1 : 1;
+% sigma_range = 1e-2 : 1e-2 : 5e-2;
+% for i = nu_range
+%     for j = sigma_range
+%         nu = [nu; i];
+%         sigma = [sigma; j];
+%         acc_cur = [];
+%         for  k = 1 : length(cur_set)
+%             [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1, i, j);
+%             acc_cur = [acc_cur; mean_acc];
+%         end
+%         acc = [acc; mean(acc_cur)];
+%     end
+% end
+% nu = reshape(nu, length(sigma_range), length(nu_range))';
+% acc = reshape(acc, length(sigma_range), length(nu_range))';
+% sigma = reshape(sigma, length(sigma_range), length(nu_range))';
+% figure;
+% pcolor(nu, sigma, acc);
+% xlabel("nu");
+% ylabel("sigma");
+% shading interp;
+% colorbar;
+% %测试2结束
+
+
+% %测试3：测试不同小波变换参数对结果的影响
+% arg = init_arg();
+% arg.dwt_order = 0;
+% db = [];
+% order = [];
+% result = [];
+% %%计算无变换情况
+% db = [db; ""];
+% order = [order; 0];
+% cur_result = [];
+% for  k = 1 : length(cur_set)
+%     dataSet = make_dataSet(".\data\" + cur_set(k) + "*", arg);
+%     [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1);
+%     cur_result = [cur_result, mean_acc];
+% end
+% cur_result = [cur_result, mean(cur_result)];
+% result = [result; cur_result];
+% %%i和j可以根据情况选择
+% for i = 1 : 3
+%     for j = 1 : 3
+%         arg.dwt_order = i;
+%         arg.wave = "db" + j;
+%         db = [db; arg.wave];
+%         order = [order; arg.dwt_order];
+%         cur_result = [];
+%         for  k = 1 : length(cur_set)
+%             dataSet = make_dataSet(".\data\" + cur_set(k) + "*", arg);
+%             [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1, 0.5, 0.04);
+%             cur_result = [cur_result, mean_acc];            
+%         end
+%         cur_result = [cur_result, mean(cur_result)];
+%         result = [result; cur_result];
+%     end
+% end
+% fprintf("小波阶数测试");
+% fprintf("阶数\t小波\t准确率\n");
+% for i = 1 : size(result, 1)
+%    fprintf("%d\t%s\t%.3f\n", order(i), db(i), result(i, end));
+% end
+% %测试3结束
+
+
+%测试4： 计算测试集情况
+cur_set = test_set;
+cur_result = [];
 arg = init_arg();
-arg.dwt_order = 0;
+arg.dwt_order = 3;
+arg.wave = "db2";
 for  k = 1 : length(cur_set)
     dataSet = make_dataSet(".\data\" + cur_set(k) + "*", arg);
-    [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1);
-    fprintf("%s\t%f\t%f\t%f\n", cur_set(k), mean_acc, std_acc,entropy);
+    [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1, 0.5, 0.04);
+    cur_result = [cur_result, mean_acc];
 end
-for i = 1 : 3
-    for j = 1 : 3
-        arg.dwt_order = j;
-        arg.wave = "db" + i;
-        fprintf("%s小波和%d次变换:\n", arg.wave, arg.dwt_order);
-        fprintf("序号\t平均准确率\t标准差\t熵\n");
-        for  k = 1 : length(cur_set)
-            dataSet = make_dataSet(".\data\" + cur_set(k) + "*", arg);
-            [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1);
-            fprintf("%s\t%f\t%f\t%f\n", cur_set(k), mean_acc, std_acc, entropy);
-        end
-    end
-end
-%对svm参数进行对数粗搜索
-arg = init_arg();
-dataSet = make_dataSet(".\data\" + cur_set(k) + "*", arg);
-nu = [];
-sigma = [];
-acc = [];
-nu_exp_range = 0 : -0.5 : -3;%nu的指数范围
-sigma_exp_range = -3 : 0.5 : 3;%sigma的指数范围
-for i = nu_exp_range
-    for j = sigma_exp_range
-        nu = [nu; 10^i];
-        sigma = [sigma; 10^j];
-        acc_cur = [];
-        for  k = 1 : length(cur_set)
-            [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1, 10^i, 10^j);
-            acc_cur = [acc_cur; mean_acc];
-        end
-        acc = [acc; mean(acc_cur)];
-    end
-end
-nu = reshape(nu, length(sigma_exp_range), length(nu_exp_range))';
-acc = reshape(acc, length(sigma_exp_range), length(nu_exp_range))';
-sigma = reshape(sigma, length(sigma_exp_range), length(nu_exp_range))';
-figure;
-pcolor(nu, sigma, acc);
-set(gca','yscale','log');
-set(gca','xscale','log');
-xlabel("nu");
-ylabel("sigma");
-shading interp;
-colorbar;
-
+display(cur_result);
 
 %用于生成数据集的函数
 function [dataSet] = make_dataSet(name, arg)
@@ -67,13 +135,7 @@ end
 %设置文件参数
 filelist = dir(name);
 file_num  = size(filelist,1);
-Fs = arg.Fs;
-%设置滤波参数
-fft_left = arg.fft_left;
-fft_right = arg.fft_right;
-filt_order = arg.filt_order;
 fs  = arg.fs;
-t_dis = arg.t_dis;
 %设置片段参数
 delta_t = arg.delta_t;
 window_length = delta_t * fs;
@@ -90,15 +152,6 @@ sum_count = 1;
 for i = 1:file_num
     %读取文件
     load(strcat('./data/', filelist(i).name), 'data');
-    %滤波
-    f_fir = [fft_left, fft_right];
-    [a,b] = butter(filt_order, f_fir * 2 / Fs, "bandpass");
-    data(:,2) = filtfilt(a, b, data(:,2));
-    data(:,3) = filtfilt(a, b, data(:,3));
-    data(:,4) = filtfilt(a, b, data(:,4));
-    %降采样和参数修正
-    data = [resample(data(:,1), fs, Fs), resample(data(:,2), fs, Fs), resample(data(:,3), fs, Fs),resample(data(:,4), fs, Fs)];
-    data = data(t_dis * fs + 1 : end - t_dis * fs , :);
     %构造激励矩阵
     buffer = data(1:window_length, 1);
     diff = conv(buffer,[1;-1]);

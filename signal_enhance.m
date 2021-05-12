@@ -4,14 +4,8 @@ function [left_vep, right_vep, learning_curve, left_vep_before, right_vep_before
 if nargin == 1
     arg = init_arg();
 end
-%设置滤波参数
-fft_left = arg.fft_left;%带通滤波器的低截止频率
-fft_right = arg.fft_right;%带通滤波器的高截止频率
-filt_order = arg.filt_order;%滤波器阶数
-Fs = arg.Fs;%降采样前的频率
-fs  = arg.fs;%降采样后的频率
-t_dis = arg.t_dis;%舍弃的头尾片段，避免开始测量和
-%设置片段参数
+%设置参数
+fs  = arg.fs;%频率
 delta_t = arg.delta_t;%刺激的时间间隔
 window_length = delta_t * fs;%刺激间隔对应的窗口长度
 interest_length = arg.interest_length * fs;%感兴趣区间长度
@@ -20,19 +14,6 @@ dwt_order = arg.dwt_order;%dwt阶数
 wave = arg.wave;%小波类型
 %筛选相关参数
 slice = arg.slice;%每次筛选筛选出的低质量信号片段个数
-%滤波:50Hz以及带通滤波
-[a,b] = butter(filt_order, [45, 55]  / (Fs / 2), "stop");
-data(:,2) = filtfilt(a, b, data(:,2));
-data(:,3) = filtfilt(a, b, data(:,3));
-data(:,4) = filtfilt(a, b, data(:,4));
-f_fir = [fft_left, fft_right];
-[a,b] = butter(filt_order, f_fir * 2 / Fs, "bandpass");
-data(:,2) = filtfilt(a, b, data(:,2));
-data(:,3) = filtfilt(a, b, data(:,3));
-data(:,4) = filtfilt(a, b, data(:,4));
-%降采样和参数修正
-data = [resample(data(:,1), fs, Fs), resample(data(:,2), fs, Fs), resample(data(:,3), fs, Fs),resample(data(:,4), fs, Fs)];
-data = data(t_dis * fs + 1 : end - t_dis * fs , :);
 %构造分段
 buffer = data(1:window_length, 1);
 diff = conv(buffer,[1;-1]);
@@ -107,8 +88,8 @@ end
 end
 
 function [mask] = svm_classify(data, slice)
-    SVMModel = fitcsvm(data', ones(size(data, 2), 1),'kernelScale','auto', ...
-            'OutlierFraction',0.05);
+    SVMModel = fitcsvm(data', ones(size(data, 2), 1),'kernelScale',0.04, ...
+            'OutlierFraction',0.05, 'nu', 0.5);
     [~,scorePred] = predict(SVMModel, data');
     t = sort(scorePred);
     if length(scorePred) < slice + 1

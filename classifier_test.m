@@ -113,18 +113,19 @@ cur_set = train_set; %选择使用的集合
 % %测试3结束
 
 
-%测试4： 计算测试集情况
-cur_set = test_set;
-cur_result = [];
-arg = init_arg();
-arg.dwt_order = 3;
-arg.wave = "db2";
-for  k = 1 : length(cur_set)
-    dataSet = make_dataSet(".\data\" + cur_set(k) + "*", arg);
-    [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1, 0.5, 0.04);
-    cur_result = [cur_result, mean_acc];
-end
-display(cur_result);
+% %测试4： 计算测试集情况
+% cur_set = test_set;
+% cur_result = [];
+% arg = init_arg();
+% arg.dwt_order = 3;
+% arg.wave = "db2";
+% for  k = 1 : length(cur_set)
+%     dataSet = make_dataSet(".\data\" + cur_set(k) + "*", arg);
+%     [mean_acc, std_acc, entropy] = svm_classify(dataSet, 10, 0.1, 0.5, 0.04);
+%     cur_result = [cur_result, mean_acc];
+% end
+% display(cur_result);
+% %测试4结束
 
 %用于生成数据集的函数
 function [dataSet] = make_dataSet(name, arg)

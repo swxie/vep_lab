@@ -15,7 +15,7 @@ right_vep_after = [];
 for i = 1:file_num
     %¶ÁÈ¡ÎÄ¼ş
     load(strcat('./data/', filelist(i).name), 'data');
-    [left_vep_cur, right_vep_cur, ~ , left_vep_cur_b, right_vep_cur_b] = signal_enhance(data, arg);
+    [left_vep_cur, right_vep_cur, learning_curve, left_vep_cur_b, right_vep_cur_b] = signal_enhance(data, arg);
     left_vep_before = [left_vep_before, mean(left_vep_cur_b, 2)];
     right_vep_before = [right_vep_before, mean(right_vep_cur_b, 2)];
     left_vep_after = [left_vep_after, mean(left_vep_cur, 2)];

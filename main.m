@@ -12,6 +12,8 @@ for i = 1 : length(filelist)
     end
     arg = init_arg();
     arg.dwt_order = 3;
+    arg.threshold = 0.1;
+    arg.slice = 1;
     arg.wave = "db2";
     [xcorr_after, xcorr_ori] = testInnerPatient(name, isPlot, arg);
     change = xcorr_after - xcorr_ori;

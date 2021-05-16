@@ -14,6 +14,9 @@ dwt_order = arg.dwt_order;%dwt阶数
 wave = arg.wave;%小波类型
 %筛选相关参数
 slice = arg.slice;%每次筛选筛选出的低质量信号片段个数
+max_iteration = arg.max_iteration;%最大迭代次数
+threshold = arg.threshold;%迭代终止对应的下降值
+log_threshold = arg.log_threshold;%迭代终止时的信号功率比
 %构造分段
 buffer = data(1:window_length, 1);
 diff = conv(buffer,[1;-1]);
@@ -54,37 +57,29 @@ end
 % subplot(2, 2, 2);
 % plot(sum(right_vep, 2));
 %%进行迭代判别、删除
-learning_curve = (mean(mean(corrcoef(left_vep))) + mean(mean(corrcoef(right_vep)))) / 2;
-while 1
-    if mod(size(left_vep, 2), slice) == 0 
-        mask = svm_classify(vep, slice);
-    else
-        mask = svm_classify(vep, mod(size(left_vep, 2), slice));
-    end
-    if sum(mask) == length(mask)
+learning_curve = [];
+for i = 1 : max_iteration
+    mask = svm_classify(vep, slice);
+    left_vep_new = mean(left_vep(:, mask > 0), 2);
+    right_vep_new = mean(right_vep(:, mask > 0), 2);
+    left_vep_del = mean(left_vep(:, mask <= 0), 2);
+    right_vep_del = mean(right_vep(:, mask <= 0), 2);
+    %条件一求去除后的互相关
+    left_vep_target = [corrcoef(left_vep_new, left_vep_del)];
+    right_vep_target = [corrcoef(right_vep_new, right_vep_del)];
+    left_vep_target = left_vep_target(2, 1);
+    right_vep_target = right_vep_target(2, 1);
+    %条件2：两个信号功率之差不应该过大
+    left_ratio = log(mean(left_vep_new.^2) / mean(left_vep_del .^2));
+    right_ratio = log(mean(right_vep_new.^2) / mean(right_vep_del .^2));
+    learning_curve = [learning_curve, min([left_vep_target, right_vep_target])];
+    if learning_curve(end) > threshold && max(abs(left_ratio), abs(right_ratio)) < log_threshold
         break;
     end
-    left_vep_new = left_vep(:, mask > 0);
-    right_vep_new = right_vep(:, mask > 0);
-    left_vep_cur = zeros(size(left_vep_new, 1), slice);
-    right_vep_cur = zeros(size(right_vep_new, 1), slice);
-    part_length = round(size(left_vep_new, 2) / slice);
-    for i = 1 : slice
-        left_vep_cur(:, i) = mean(left_vep(:, (i - 1) * part_length + 1 : i * part_length), 2);
-        right_vep_cur(:, i) = mean(right_vep(:, (i - 1) * part_length + 1 : i * part_length), 2);
-    end
-    learning_curve = [learning_curve; (mean(mean(corrcoef(left_vep_cur))) + mean(mean(corrcoef(right_vep_cur)))) / 2];
-    if learning_curve(end) < learning_curve(end - 1)
-        break;
-    end
-    left_vep = left_vep_new;
-    right_vep = right_vep_new;
+    left_vep = left_vep(:, mask > 0);
+    right_vep = right_vep(:, mask > 0);
     vep = vep(:, mask > 0);
 end
-% subplot(2, 2, 3);
-% plot(sum(left_vep, 2));
-% subplot(2, 2, 4);
-% plot(sum(right_vep, 2));
 end
 
 function [mask] = svm_classify(data, slice)
